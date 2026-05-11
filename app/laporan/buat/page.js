@@ -3,10 +3,15 @@
 import Navbar from "../../components/Navbar";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../lib/supabase";
-import { useState } from "react";
+import { useState, useActionState } from "react";
+import { createReport } from "../../actions/reportAction";
 
 export default function BuatLaporan() {
   const router = useRouter();
+
+  // ✅ Zod form state
+  const [state, formAction] =
+    useActionState(createReport, null);
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -15,69 +20,12 @@ export default function BuatLaporan() {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
 
-  const handleSubmit = async (e) => {
-
-    
-    e.preventDefault();
-
-    let imageUrl = null;
-
-    // ✅ Upload file ke Supabase Storage
-    if (file) {
-      const fileName = `${Date.now()}-${file.name}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("reports") // nama bucket
-        .upload(fileName, file);
-
-      if (uploadError) {
-        console.error(uploadError);
-        alert("Upload gambar gagal");
-        return;
-      }
-
-      // ✅ Ambil public URL
-      const { data: publicUrlData } = supabase
-        .storage
-        .from("reports")
-        .getPublicUrl(fileName);
-
-      imageUrl = publicUrlData.publicUrl;
-    }
-
-    // ✅ Simpan ke database
-    const { data, error } = await supabase
-      .from("reports")
-      .insert([
-        {
-          title,
-          content,
-          location,
-          date,
-          image_url: imageUrl,
-          status: "pending"
-        }
-      ])
-      .select();
-
-   if (error) {
-  console.error("ERROR INSERT:", error);
-  alert(error.message);
-  return;
-}
-
-    const reportId = data[0].id;
-
-    // 🚀 redirect ke halaman detail
-    router.push(`/laporan/${reportId}`);
-  };
-
   return (
     <>
       <Navbar />
 
       <form
-        onSubmit={handleSubmit}
+        action={formAction}
         style={{
           maxWidth: "600px",
           margin: "50px auto",
@@ -88,33 +36,84 @@ export default function BuatLaporan() {
       >
         <h2>SAMPAIKAN LAPORAN ANDA</h2>
 
+        {/* TITLE */}
         <input
+          name="title"
           placeholder="Ketik Judul Laporan Anda"
           className="input"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
 
+        {/* ERROR TITLE */}
+        {state?.errors?.title && (
+          <p style={{ color: "red", fontSize: "14px" }}>
+            {state.errors.title[0]}
+          </p>
+        )}
+
+        {/* CONTENT */}
         <textarea
+          name="content"
           placeholder="Ketik Isi Laporan Anda"
           className="input"
           value={content}
           onChange={(e) => setContent(e.target.value)}
         />
 
+        {/* ERROR CONTENT */}
+        {state?.errors?.content && (
+          <p style={{ color: "red", fontSize: "14px" }}>
+            {state.errors.content[0]}
+          </p>
+        )}
+
+        {/* DATE */}
         <input
+          name="date"
           type="date"
           className="input"
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />
 
+        {/* ERROR DATE */}
+        {state?.errors?.date && (
+          <p style={{ color: "red", fontSize: "14px" }}>
+            {state.errors.date[0]}
+          </p>
+        )}
+
+        {/* LOCATION */}
         <input
+          name="location"
           placeholder="Lokasi Kejadian"
           className="input"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
         />
+
+        {/* ERROR LOCATION */}
+        {state?.errors?.location && (
+          <p style={{ color: "red", fontSize: "14px" }}>
+            {state.errors.location[0]}
+          </p>
+        )}
+
+        {/* EMAIL */}
+        <input
+          name="email"
+          type="email"
+          placeholder="Email Pelapor"
+          className="input"
+        />
+
+        {/* ERROR EMAIL */}
+        {state?.errors?.email && (
+          <p style={{ color: "red", fontSize: "14px" }}>
+            {state.errors.email[0]}
+          </p>
+        )}
 
         {/* 📸 Upload gambar */}
         <input
@@ -125,7 +124,9 @@ export default function BuatLaporan() {
             setFile(selectedFile);
 
             if (selectedFile) {
-              setPreview(URL.createObjectURL(selectedFile));
+              setPreview(
+                URL.createObjectURL(selectedFile)
+              );
             }
           }}
         />
@@ -141,6 +142,20 @@ export default function BuatLaporan() {
               marginTop: "10px"
             }}
           />
+        )}
+
+        {/* MESSAGE ERROR DATABASE */}
+        {state?.message && (
+          <p style={{ color: "red" }}>
+            {state.message}
+          </p>
+        )}
+
+        {/* SUCCESS */}
+        {state?.success && (
+          <p style={{ color: "green" }}>
+            Laporan berhasil dikirim ✅
+          </p>
         )}
 
         <button

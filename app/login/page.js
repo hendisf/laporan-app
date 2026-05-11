@@ -2,35 +2,42 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function Login() {
-  const router = useRouter();
-
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [password, setPassword] =
+    useState("");
+  const [loading, setLoading] =
+    useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      alert("Isi email dan password dulu!");
+      alert("Isi email dan password!");
       return;
     }
 
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error, data } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+    console.log(data);
+    console.log(error);
 
     setLoading(false);
 
     if (error) {
       alert(error.message);
     } else {
-      router.push("/");
+      document.cookie = "session=true; path=/";
+
+      alert("Login berhasil");
+      
+      window.location.assign("/dashboard");
     }
   };
 
@@ -50,10 +57,16 @@ export default function Login() {
           backgroundColor: "#fff",
           padding: "30px",
           borderRadius: "12px",
-          boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+          boxShadow:
+            "0 10px 25px rgba(0,0,0,0.1)",
         }}
       >
-        <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
+        <h2
+          style={{
+            textAlign: "center",
+            marginBottom: "20px",
+          }}
+        >
           Selamat Datang 👋
         </h2>
 
@@ -61,7 +74,9 @@ export default function Login() {
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) =>
+            setEmail(e.target.value)
+          }
           style={{
             width: "100%",
             padding: "10px",
@@ -75,7 +90,9 @@ export default function Login() {
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) =>
+            setPassword(e.target.value)
+          }
           style={{
             width: "100%",
             padding: "10px",
@@ -91,7 +108,9 @@ export default function Login() {
           style={{
             width: "100%",
             padding: "10px",
-            backgroundColor: loading ? "#94a3b8" : "#3b82f6",
+            backgroundColor: loading
+              ? "#94a3b8"
+              : "#3b82f6",
             color: "#fff",
             border: "none",
             borderRadius: "8px",
@@ -99,12 +118,22 @@ export default function Login() {
             fontWeight: "bold",
           }}
         >
-          {loading ? "Loading..." : "MASUK"}
+          {loading
+            ? "Loading..."
+            : "MASUK"}
         </button>
 
-        <p style={{ textAlign: "center", marginTop: "15px" }}>
+        <p
+          style={{
+            textAlign: "center",
+            marginTop: "15px",
+          }}
+        >
           Belum punya akun?{" "}
-          <Link href="/register" style={{ color: "#3b82f6" }}>
+          <Link
+            href="/register"
+            style={{ color: "#3b82f6" }}
+          >
             Daftar
           </Link>
         </p>
